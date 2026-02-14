@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para mi San Valentín ❤️</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #ffdde1; /* Color de fondo rosita */
+            font-family: 'Arial', sans-serif;
+            overflow: hidden; /* Evita barras de desplazamiento */
+        }
+        canvas {
+            border: 4px solid #ff6b81; /* Borde del juego */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 107, 129, 0.5);
+            background: linear-gradient(to bottom, #ffeef0, #ffc7d0);
+            touch-action: none; /* Importante para que funcione bien en celular */
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    // --- CONFIGURACIÓN DEL JUEGO ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Ajustamos el tamaño del canvas para que se vea bien en cualquier pantalla
+    let WIDTH = window.innerWidth * 0.9;
+    let HEIGHT = window.innerHeight * 0.8;
+    if (WIDTH > 600) WIDTH = 600; // Límite de ancho para PC
+    if (HEIGHT > 800) HEIGHT = 800; // Límite de alto
+
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+
+    let score = 0;
+    let gameOver = false;
+    const META_PUNTOS = 20; // Puntos necesarios para ganar
+
+    // --- EMOJIS COMO GRÁFICOS ---
+    // Puedes cambiar estos emojis si quieres personalizarlo más
+    const PLAYER_EMOJI = "🧺"; // Una cesta (o puedes poner tu emoji favorito)
+    const HEART_EMOJIS = ["❤️", "💖", "💘", "💝", "😍"]; 
+
+    // --- EL JUGADOR (LA CESTA) ---
+    const player = {
+        x: WIDTH / 2,
+        y: HEIGHT - 60,
+        size: 50, // Tamaño del emoji
+        draw: function() {
+            ctx.font = `${this.size}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(PLAYER_EMOJI, this.x, this.y);
+        }
+    };
+
+    // --- LOS CORAZONES ---
+    let hearts = [];
+
+    function createHeart() {
+        const size = Math.random() * 20 + 20; // Tamaño aleatorio entre 20 y 40
+        hearts.push({
+            x: Math.random() * WIDTH,
+            y: -size, // Empiezan justo arriba de la pantalla
+            size: size,
+            speed: Math.random() * 3 + 2, // Velocidad aleatoria
+            emoji: HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)]
+        });
+    }
+
+    // --- CONTROL DEL JUEGO (Movimiento) ---
+    // Funciona con mouse o dedo en pantalla táctil
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        player.x = e.clientX - rect.left;
+    });
+     canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        player.x = e.touches[0].clientX - rect.left;
+    }, { passive: false });
+
+
+    // --- BUCLE PRINCIPAL DEL JUEGO ---
+    function update() {
+        if (gameOver) return;
+
+        // Limpiar pantalla
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+        // Crear corazones aleatoriamente
+        if (Math.random() < 0.03) { // Probabilidad de que aparezca un corazón
+            createHeart();
+        }
+
+        // Dibujar y mover jugador
+        player.draw();
+
+        // Gestionar corazones
+        for (let i = hearts.length - 1; i >= 0; i--) {
+            let h = hearts[i];
+            h.y += h.speed;
+
+            // Dibujar corazón
+            ctx.font = `${h.size}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(h.emoji, h.x, h.y);
+
+            // Detectar colisión (si la cesta atrapa el corazón)
+            let dist = Math.sqrt(Math.pow(h.x - player.x, 2) + Math.pow(h.y - (player.y - player.size/2), 2));
+            
+            if (dist < player.size / 1.5 + h.size / 1.5) {
+                score++;
+                hearts.splice(i, 1); // Eliminar corazón atrapado
+            } 
+            // Eliminar si cae fuera de la pantalla
+            else if (h.y > HEIGHT + 50) {
+                 hearts.splice(i, 1);
+            }
+        }
+
+        // Dibujar puntuación
+        ctx.fillStyle = "#ff4757";
+        ctx.font = "bold 24px Arial";
+        ctx.textAlign = 'left';
+        ctx.fillText("Amor atrapado: " + score + "/" + META_PUNTOS, 20, 40);
+
+        // Comprobar condición de victoria
+        if (score >= META_PUNTOS) {
+            endGame();
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    // --- PANTALLA FINAL ---
+    function endGame() {
+        gameOver = true;
+        ctx.fillStyle = "rgba(255, 230, 235, 0.9)"; // Fondo semitransparente
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        
+        ctx.fillStyle = "#d63031";
+        ctx.textAlign = 'center';
+        
+        // --- ¡IMPORTANTE! PERSONALIZA ESTO AQUÍ ---
+        ctx.font = "bold 30px Arial";
+        ctx.fillText("¡Lo lograste, mi amor!", WIDTH / 2, HEIGHT / 2 - 40);
+        ctx.font = "20px Arial";
+        ctx.fillText("Gracias por atrapar todo mi cariño.", WIDTH / 2, HEIGHT / 2 + 10);
+        ctx.fillText("Te amo muchísimo. Feliz San Valentín ❤️", WIDTH / 2, HEIGHT / 2 + 50);
+    }
+
+    // INICIAR EL JUEGO
+    update();
+
+</script>
+</body>
+</html>
